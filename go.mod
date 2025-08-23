@@ -1,4 +1,4 @@
-module github.com/barry-saaun/go-googleapis
+module go-googleapis
 
 go 1.24.5
 

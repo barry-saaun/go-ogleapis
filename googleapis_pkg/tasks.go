@@ -1,4 +1,4 @@
-package googleapis
+package googleapis_pkg
 
 import (
 	"context"
@@ -22,6 +22,7 @@ func ListTasks(client *http.Client) error {
 		return fmt.Errorf("Unable to retrieve task lists: %w", err)
 	}
 
+	fmt.Println("Your Task Lists:")
 	if len(taskLists.Items) == 0 {
 		fmt.Println("No task lists found. ✅")
 	} else {
@@ -29,8 +30,6 @@ func ListTasks(client *http.Client) error {
 			fmt.Printf("- %s (%s)\n", i.Title, i.Id)
 		}
 	}
-
-	fmt.Println("Your Task Lists:")
 
 	return nil
 }
