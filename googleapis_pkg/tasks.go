@@ -28,6 +28,18 @@ func ListTasks(client *http.Client) error {
 	} else {
 		for _, i := range taskLists.Items {
 			fmt.Printf("- %s (%s)\n", i.Title, i.Id)
+			tasks, err := service.Tasks.List(i.Id).Do()
+			if err != nil {
+				log.Printf("Unable to retrieve tasks for list %s: %v", i.Title, err)
+				continue // Continue to the next task list
+			}
+			if len(tasks.Items) == 0 {
+				fmt.Printf("  No tasks found in list '%s'.\n", i.Title)
+			} else {
+				for _, task := range tasks.Items {
+					fmt.Printf("  - %s\n", task.Title)
+				}
+			}
 		}
 	}
 
