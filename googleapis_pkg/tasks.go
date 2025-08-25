@@ -1,49 +1,36 @@
-package googleapis_pkg
+package googleapispkg
 
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"google.golang.org/api/option"
 	"google.golang.org/api/tasks/v1"
 )
 
-func ListTasks(client *http.Client) error {
-	service, err := initTasksService(client)
+func ListTasks(service *tasks.Service, taskListId string) ([]*tasks.Task, error) {
+	tasksRes, err := service.Tasks.List(taskListId).Do()
 	if err != nil {
-		log.Fatalf("Unable to create Tasks Service: %w", err)
-		return fmt.Errorf("Unable to create Tasks Service: %w", err)
+		return nil, fmt.Errorf("❌ Unable to retrieve your tasks: %w", err)
 	}
 
+	if len(tasksRes.Items) == 0 {
+		return []*tasks.Task{}, nil
+	}
+
+	return tasksRes.Items, nil
+}
+
+func GetTaskListId(service *tasks.Service) (string, error) {
 	taskLists, err := service.Tasklists.List().Do()
 	if err != nil {
-		return fmt.Errorf("Unable to retrieve task lists: %w", err)
+		return "", fmt.Errorf("❌ Unable to retrieve the task list: %w\n", err)
 	}
 
-	fmt.Println("Your Task Lists:")
-	if len(taskLists.Items) == 0 {
-		fmt.Println("No task lists found. ✅")
-	} else {
-		for _, i := range taskLists.Items {
-			fmt.Printf("- %s (%s)\n", i.Title, i.Id)
-			tasks, err := service.Tasks.List(i.Id).Do()
-			if err != nil {
-				log.Printf("Unable to retrieve tasks for list %s: %v", i.Title, err)
-				continue // Continue to the next task list
-			}
-			if len(tasks.Items) == 0 {
-				fmt.Printf("  No tasks found in list '%s'.\n", i.Title)
-			} else {
-				for _, task := range tasks.Items {
-					fmt.Printf("  - %s\n", task.Title)
-				}
-			}
-		}
-	}
+	taskListId := taskLists.Items[0].Id
 
-	return nil
+	return taskListId, nil
 }
 
 func initTasksService(client *http.Client) (*tasks.Service, error) {
