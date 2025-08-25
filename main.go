@@ -26,7 +26,8 @@ func main() {
 		RedirectURL:  os.Getenv("REDIRECT_URL"),
 		Scopes: []string{
 			"https://www.googleapis.com/auth/tasks",
-			"https://www.googleapis.com/auth/tasks.readonly",
+			"https://www.googleapis.com/auth/calendar",
+			"https://www.googleapis.com/auth/calendar.events",
 		},
 		Endpoint: google.Endpoint,
 	}
