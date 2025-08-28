@@ -26,7 +26,7 @@ func CreateEvent(service *calendar.Service, title string, due time.Time) (*calen
 	return service.Events.Insert("primary", event).Do()
 }
 
-func InitCalendarService(client *http.Client) (*calendar.Service, error) {
+func initCalendarService(client *http.Client) (*calendar.Service, error) {
 	ctx := context.Background()
 
 	cal, err := calendar.NewService(ctx, option.WithHTTPClient(client))

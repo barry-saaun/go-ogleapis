@@ -1,8 +1,9 @@
 package googleapispkg
 
 import (
+	"fmt"
+	"log"
 	"net/http"
-	"time"
 
 	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/tasks/v1"
@@ -11,8 +12,8 @@ import (
 type TaskManager struct {
 	TaskTitle string
 	Note      *string
-	Completed bool
-	DueDate   time.Time
+	Completed *string
+	DueDate   string
 }
 
 type TaskManagerServices struct {
@@ -20,15 +21,15 @@ type TaskManagerServices struct {
 	calendarService *calendar.Service
 }
 
-type TaskReult struct {
+type TaskResult struct {
 	CreatedTask *tasks.Task
 	taskId      string
-	talendarId  string
+	calendarId  string
 }
 
-func initTaskAndCalendarService(client *http.Client) (*TaskManagerServices, error) {
-	calendarSrv, calErr := InitCalendarService(client)
-	tasksSrv, taskErr := InitTasksService(client)
+func InitTaskAndCalendarService(client *http.Client) (*TaskManagerServices, error) {
+	calendarSrv, calErr := initCalendarService(client)
+	tasksSrv, taskErr := initTasksService(client)
 
 	if calErr != nil || taskErr != nil {
 		return nil, nil
@@ -40,11 +41,30 @@ func initTaskAndCalendarService(client *http.Client) (*TaskManagerServices, erro
 	}, nil
 }
 
-func CreateTask(taskManager *TaskManager, managerServices *TaskManagerServices, client *http.Client) (*TaskReult, error) {
+func CreateTask(taskManager *TaskManager, managerServices *TaskManagerServices, client *http.Client) (*TaskResult, error) {
 	taskListId, err := GetTaskListId(managerServices.tasksService)
 	if err != nil {
 		return nil, err
 	}
+
+	task := &tasks.Task{
+		Title:     taskManager.TaskTitle,
+		Due:       taskManager.DueDate,
+		Completed: nil,
+	}
+
+	createdTaskRes, err := managerServices.tasksService.Tasks.Insert(taskListId, task).Do()
+	if err != nil {
+		log.Fatalf("Failed creating task: %w\n", err)
+	}
+
+	fmt.Printf("Created Task ID: %s\n", createdTaskRes.Id)
+
+	return &TaskResult{
+		CreatedTask: createdTaskRes,
+		taskId:      createdTaskRes.Id,
+		calendarId:  "",
+	}, nil
 }
 
 func ModifyTask() {}

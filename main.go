@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"go-googleapis/auth"
-	"go-googleapis/googleapis_pkg"
+	googleapispkg "go-googleapis/googleapis_pkg"
 	"log"
 	"os"
 
@@ -38,11 +38,19 @@ func main() {
 		log.Fatalf("Unable to get client: %v\n", err)
 	}
 
-	// err = googleapis.ListTasks(client)
-	err = googleapis_pkg.ListTasks(client)
-	if err != nil {
-		log.Fatalf("Error listting tasks: %v\n", err)
+	taskManager := &googleapispkg.TaskManager{
+		TaskTitle: "hello world new",
+		DueDate:   "2025-08-29T23:00:00.000Z",
 	}
+
+	services, err := googleapispkg.InitTaskAndCalendarService(client)
+	if err != nil {
+		log.Fatalf("Error initialising services for task and calendar: %w\n", err)
+	}
+
+	createdTask, err := googleapispkg.CreateTask(taskManager, services, client)
+
+	fmt.Printf("createdTaskId: %w\n", createdTask)
 
 	fmt.Println("Done ✅")
 }
