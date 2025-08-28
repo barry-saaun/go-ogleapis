@@ -10,9 +10,12 @@ import (
 
 	"github.com/pkg/browser"
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
-func SaveToken(path string, token *oauth2.Token) error {
+var oauthConfig *oauth2.Config
+
+func saveToken(path string, token *oauth2.Token) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return err
@@ -22,7 +25,7 @@ func SaveToken(path string, token *oauth2.Token) error {
 	return json.NewEncoder(f).Encode(token)
 }
 
-func LoadToken(path string) (*oauth2.Token, error) {
+func loadToken(path string) (*oauth2.Token, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -36,13 +39,25 @@ func LoadToken(path string) (*oauth2.Token, error) {
 	return &token, err
 }
 
-func GetClient(config *oauth2.Config) (*http.Client, error) {
-	token, err := resolveToken(config)
+func GetClient() (*http.Client, error) {
+	oauthConfig = &oauth2.Config{
+		ClientID:     os.Getenv("CLIENT_ID"),
+		ClientSecret: os.Getenv("CLIENT_SECRET"),
+		RedirectURL:  os.Getenv("REDIRECT_URL"),
+		Scopes: []string{
+			"https://www.googleapis.com/auth/tasks",
+			"https://www.googleapis.com/auth/calendar",
+			"https://www.googleapis.com/auth/calendar.events",
+		},
+		Endpoint: google.Endpoint,
+	}
+
+	token, err := resolveToken(oauthConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	return config.Client(context.Background(), token), nil
+	return oauthConfig.Client(context.Background(), token), nil
 }
 
 func makeCallbackHandler(config *oauth2.Config, tokenChan chan *oauth2.Token) http.HandlerFunc {
@@ -61,7 +76,7 @@ func makeCallbackHandler(config *oauth2.Config, tokenChan chan *oauth2.Token) ht
 			return
 		}
 
-		SaveToken("token.json", token)
+		saveToken("token.json", token)
 		tokenChan <- token
 
 		fmt.Fprint(w, "✅ Authentication Successful! You can close this window.")
@@ -69,7 +84,7 @@ func makeCallbackHandler(config *oauth2.Config, tokenChan chan *oauth2.Token) ht
 }
 
 func resolveToken(config *oauth2.Config) (*oauth2.Token, error) {
-	token, err := LoadToken("token.json")
+	token, err := loadToken("token.json")
 	if err == nil {
 		if token.Valid() {
 			fmt.Println("✅ Loaded saved token, no need to login again.")
@@ -81,7 +96,7 @@ func resolveToken(config *oauth2.Config) (*oauth2.Token, error) {
 
 		if err == nil {
 			fmt.Println("🔄 Token refreshed successfully.")
-			SaveToken("token.json", newToken)
+			saveToken("token.json", newToken)
 			return newToken, nil
 		}
 
