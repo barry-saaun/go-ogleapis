@@ -10,9 +10,23 @@ import (
 )
 
 func CreateEvent(service *calendar.Service, title string, due time.Time) (*calendar.Event, error) {
+	event := &calendar.Event{
+		Summary: title,
+		Start: &calendar.EventDateTime{
+			DateTime: due.Format(time.RFC3339),
+			TimeZone: "Australia/Melbourne",
+		},
+
+		End: &calendar.EventDateTime{
+			DateTime: due.Format(time.RFC3339),
+			TimeZone: "Australia/Melbourne",
+		},
+	}
+
+	return service.Events.Insert("primary", event).Do()
 }
 
-func initCalendarService(client *http.Client) (*calendar.Service, error) {
+func InitCalendarService(client *http.Client) (*calendar.Service, error) {
 	ctx := context.Background()
 
 	cal, err := calendar.NewService(ctx, option.WithHTTPClient(client))
