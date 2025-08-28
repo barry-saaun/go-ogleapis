@@ -33,7 +33,7 @@ func GetTaskListId(service *tasks.Service) (string, error) {
 	return taskListId, nil
 }
 
-func initTasksService(client *http.Client) (*tasks.Service, error) {
+func InitTasksService(client *http.Client) (*tasks.Service, error) {
 	ctx := context.Background()
 
 	service, err := tasks.NewService(ctx, option.WithHTTPClient(client))
