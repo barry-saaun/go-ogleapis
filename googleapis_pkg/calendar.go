@@ -2,28 +2,20 @@ package googleapispkg
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-	"time"
 
 	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/option"
 )
 
-func CreateEvent(service *calendar.Service, title string, due time.Time) (*calendar.Event, error) {
-	event := &calendar.Event{
-		Summary: title,
-		Start: &calendar.EventDateTime{
-			DateTime: due.Format(time.RFC3339),
-			TimeZone: "Australia/Melbourne",
-		},
-
-		End: &calendar.EventDateTime{
-			DateTime: due.Format(time.RFC3339),
-			TimeZone: "Australia/Melbourne",
-		},
+func createEvent(service *calendar.Service, event *calendar.Event) (*calendar.Event, error) {
+	createdEvent, err := service.Events.Insert("primary", event).Do()
+	if err != nil {
+		return nil, fmt.Errorf("❌ Failed to create event: %w", err)
 	}
 
-	return service.Events.Insert("primary", event).Do()
+	return createdEvent, nil
 }
 
 func initCalendarService(client *http.Client) (*calendar.Service, error) {

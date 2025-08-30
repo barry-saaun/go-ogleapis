@@ -33,6 +33,17 @@ func GetTaskListId(service *tasks.Service) (string, error) {
 	return taskListId, nil
 }
 
+func createTask(tasksService *tasks.Service, task *tasks.Task, taskListId string) (*tasks.Task, error) {
+	createdTaskRes, err := tasksService.Tasks.Insert(taskListId, task).Do()
+	if err != nil {
+		return nil, fmt.Errorf("❌ Failed to create task: %w", err)
+	}
+
+	fmt.Printf("[createTask]: combine notes: %s\n", task.Notes)
+
+	return createdTaskRes, nil
+}
+
 func initTasksService(client *http.Client) (*tasks.Service, error) {
 	ctx := context.Background()
 
