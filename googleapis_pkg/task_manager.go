@@ -17,10 +17,12 @@ type AppEventMetadata struct {
 	CalendarId string `json:"calendarId"`
 }
 
-const (
+var (
 	metadataTag = "[APP_METADATA]"
 	// Regex to find our metadata JSON in the notes
-	metadataRegex = metadataTag + `\s*(\{.*\})`
+	metadataRe = regexp.MustCompile(
+		regexp.QuoteMeta(metadataTag) + `\s*(\{[^}]+\})`,
+	)
 	// Default event duration when creating a calendar event for a task
 	defaultEventDuration = 30 * time.Minute
 	// Timezone for events. Adjust if your users are in different timezones or allow customization.
@@ -161,9 +163,28 @@ func extractMetadataFromNotes(notes string) (*AppEventMetadata, error) {
 	return &metadata, nil
 }
 
-func cleanupMetadataInNotes(notes string) string {
-	re := regexp.MustCompile(`(?m)^.*\s*` + regexp.QuoteMeta(metadataTag) + `\s*\{.*\}$\n*`)
-	return re.ReplaceAllString(notes, "")
+func extractMetadataFromNotes(notes string) (*AppEventMetadata, error) {
+	if notes == "" {
+		return nil, fmt.Errorf("notes is empty")
+	}
+
+	m := metadataRe.FindStringSubmatch(notes)
+	if len(m) < 2 {
+		return nil, fmt.Errorf("app metadata not found")
+	}
+
+	raw := strings.TrimSpace(m[1])
+
+	var meta AppEventMetadata
+	if err := json.Unmarshal([]byte(raw), &meta); err != nil {
+		return nil, fmt.Errorf("invalid app metadata JSON: %w", err)
+	}
+
+	if meta.EventId == "" || meta.CalendarId == "" {
+		return nil, fmt.Errorf("incomplete app metadata: %+v", meta)
+	}
+
+	return &meta, nil
 }
 
 func derefString(s *string) string {
