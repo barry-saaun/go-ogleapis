@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"time"
 
 	"google.golang.org/api/calendar/v3"
@@ -136,6 +137,34 @@ func CreateTaskWithDueTime(ctx context.Context, taskManager *TaskManager, manage
 }
 
 func ModifyTask() {}
+
+func extractMetadataFromNotes(notes string) (*AppEventMetadata, error) {
+	if notes == "" {
+		return nil, fmt.Errorf("notes are empty")
+	}
+
+	re := regexp.MustCompile(metadataRegex)
+	matches := re.FindStringSubmatch(notes)
+
+	if len(matches) < 2 {
+		return nil, fmt.Errorf("metadata tag not found or invalid format")
+	}
+
+	jsonString := matches[1]
+	var metadata AppEventMetadata
+
+	err := json.Unmarshal([]byte(jsonString), &metadata)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal metadata JSON from notes: %w", err)
+	}
+
+	return &metadata, nil
+}
+
+func cleanupMetadataInNotes(notes string) string {
+	re := regexp.MustCompile(`(?m)^.*\s*` + regexp.QuoteMeta(metadataTag) + `\s*\{.*\}$\n*`)
+	return re.ReplaceAllString(notes, "")
+}
 
 func derefString(s *string) string {
 	if s == nil {
